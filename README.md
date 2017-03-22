@@ -18,11 +18,11 @@ Hardware:
 The "main" output is:
  - PWM signal feed to the motor controller
 
- User Interface:
-	- Button UP		-> Motor Speed Up
-	- Button DOWN	-> Motor Speed Down
-	- BOTH buttons -> MOTOR STOP (Ramp down to 0)
-		- BOTH buttons pushed again -> Motor "SET DIRECTION" Menu
+User Interface:
+ - Button UP:		Motor Speed Up
+ - Button DOWN:	Motor Speed Down
+ - BOTH buttons:	MOTOR STOP (Ramp down to 0)
+	- BOTH buttons pushed again -> Motor "SET DIRECTION" Menu
 
 Overload protection:
 	The program REDUCE the speed to a configurable value after 
@@ -35,6 +35,5 @@ Overload protection:
 Program compiled/linked via PlatformIO 3.3
 It should be easy to compile it using Arduino IDE
 
-2017-03-22: Ver 0.9 - Luca (lucabuka@gmail.com)
+2017-03-22: Ver 0.9 - Luca (lucabuka AT gmail DOT com)
 
-# Arduino-Pottery-Wheel-Controller
