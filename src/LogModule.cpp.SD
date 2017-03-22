@@ -1,0 +1,259 @@
+
+
+#include <Arduino.h>
+#include "LogModule.h"
+
+/*
+ *  SDFAT lib :  pio lib install 1432
+ */
+
+
+static char * ltrimInt(char *str);
+static char * rtrimInt(char *str);
+static char * trimInt(char *str);
+
+static char maxLogFileNum = 10; // number of log file (after this -> rotate)
+static char cntFile[] = "CNT.TXT"; // File containing current CNT
+static char logFileBName[] = "LOG."; // Log file BASE name
+static char logFileName[10] ; // String holding the calculated filename
+										// ACHTUG!!!
+										//  It should be wide enough to contains
+										//  string BASE + CNT
+
+static File file;
+
+/**************************************************************************
+ * Init SD lib
+ *************************************************************************/
+bool LOG_init(int cs_pin) {
+	if (!SD.begin(cs_pin)) {
+		Serial.println("Error");
+		return(1);
+	}
+	Serial.println("OK");
+	return(0);
+}
+
+/**************************************************************************
+ * Load cntSuff from "cntFile" (or create cntFile)
+ * Open Log file for writing
+ *************************************************************************/
+bool LOG_open() {
+	char str[10];
+	memset(str,0,10);
+
+	setLogFileName(logFileName);
+
+	if (! (file = SD.open(logFileName, O_RDWR | O_CREAT | O_TRUNC))) {
+		Serial.println("Error");
+		return(1);
+	}
+	Serial.println("  OK");
+
+	file.print("LogFile created on millis():");
+	file.println(millis());
+
+	return(0);
+
+}
+
+
+
+
+int fileGets(File file, char *line, int maxChar) {
+	int i;
+	for(i=0 ; i < maxChar; i++) {
+		if(file.available()) {
+			line[i] = 	file.read();
+		} else {
+			break;
+		}
+	}
+	return(i);
+}
+
+/*
+ *  Read CNT from file and returns CNT+1
+ *  Save new CNT back to file
+ */
+static int getCntSuff(char * Fname){
+	int retCnt = 0;
+	if (!(file = SD.open(Fname))) { // file not found (first run)
+		retCnt = 0;
+	} else { // read "cnt" string from the file (file contains just one str)
+		char line[10];
+
+		int n = fileGets(file, line, sizeof(line)) ;
+Serial.print("Line:[");
+Serial.print(line);
+Serial.print("]");
+
+Serial.print(" n:[");
+Serial.print(n);
+Serial.print("]");
+
+		if(n>0) { // file not empty
+			char * s = trimInt(line);
+Serial.print(" s:[");
+Serial.print(s);
+Serial.print("]");
+
+			int cnt = atoi(s);
+Serial.print(" cnt:[");
+Serial.print(cnt);
+Serial.print("]");
+
+
+
+
+			retCnt = cnt + 1;
+			if(retCnt > maxLogFileNum) {
+				retCnt = 0;
+			}
+		} else {
+			retCnt = 0;
+		}
+		file.close();
+		Serial.print("Cnt (loaded and ++):");
+		Serial.print(retCnt);
+	}
+	// Update CNT file content with new CNT value
+	writeCntToFile(retCnt);
+
+	return(retCnt);
+}
+
+
+/*
+ *  Write into "Fname" the "rotated" LOG file name to be used 
+ */
+static char * setLogFileName(char * Fname){
+
+	// Get CNT suff for LOG file to be created
+	int cnt=getCntSuff(cntFile);
+
+	// Open LOG file for writing
+	char num[11];
+	strcpy(Fname,logFileBName);
+	// Warning: Non std itoa()
+	// http://www.nongnu.org/avr-libc/user-manual/group__avr__stdlib.html
+	strcat(Fname, itoa(cnt,num,10)); 
+
+Serial.print(" LogFIle:["); 
+Serial.print(Fname);
+Serial.print("] "); 
+	return(Fname);
+}
+
+
+static bool writeCntToFile(int cnt){
+	
+	if (! (file = SD.open(cntFile, O_RDWR | O_CREAT | O_TRUNC))) {
+		Serial.println("opening CNT FILE for write failed");
+		return(1);
+	}
+
+	file.println(cnt);
+	file.close();
+
+	return(0);
+
+}
+
+
+
+
+
+
+
+
+/****************************************************************************
+ *		Ritorna il puntatore al primo carattere NUMERICO di str
+ ****************************************************************************/
+static char * ltrimInt(char *str) {
+	char	*	s=str-1;
+	while(*(++s)){
+		if( (*s >= '0') && (*s) <= '9' ) {
+			return(s);
+		}
+	}
+	return(str);
+}
+
+/***************************************************************************
+ *		Inserisce un FINE STRINGA ('\0') dopo l'ultimo carattere 
+ *		numerico (0-9) della stringa
+ ***************************************************************************/
+static char * rtrimInt(char *str) {
+	int	l=strlen(str);
+	char	*	s=str+l;
+
+	while( ( *(--s) <= '0') || (*s >= '9' )    ) {
+		*s = '\0';
+	}
+	return(str);
+}
+
+
+static char * trimInt(char *str) {
+	rtrimInt(str);
+	ltrimInt(str);
+	return(str);
+}
+
+
+
+void fileDump(File f) {
+	Serial.print("Dump:[");
+	Serial.print(f.name());
+	Serial.println("]");
+	while (f.available()) {
+		Serial.write(f.read());
+	}
+	Serial.print("----------------- END Dump --------------------------");
+}
+
+/*************************************************************************
+*************************************************************************/
+void LOG_printDebugInfo(){
+
+	File root = SD.open("/", O_READ);
+
+	printDirectory(root, 0);
+
+	root.close();
+
+	// Get CNT suff for LOG file to be created
+	if ((file=SD.open(cntFile, O_READ))) { 
+		fileDump(file);	
+	}
+	file.close();
+
+}
+
+
+static void printDirectory(File dir, int numTabs) {
+
+	while (true) {
+		File entry =  dir.openNextFile();
+		if (! entry) {
+			// no more files
+			break;
+		}
+		for (uint8_t i = 0; i < numTabs; i++) {
+			Serial.print('\t');
+		}
+		Serial.print(entry.name());
+		if (entry.isDirectory()) {
+			Serial.println("/");
+			printDirectory(entry, numTabs + 1);
+		} else {
+			// files have sizes, directories do not
+			Serial.print("\t\t");
+			Serial.println(entry.size(), DEC);
+		}
+		entry.close();
+	}
+}
+
+
