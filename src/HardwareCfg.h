@@ -5,9 +5,9 @@
 /**************************************************************************
  * Hardware configuration of Arduino pins
  **************************************************************************/
-#define LED_ON         6 // ON-OFF Led
-#define SENSOR_SPEED	  2 // RPM: Pin used for Speed sensor - via interrupt
-#define SPEAKER		  3 // Loudspeaker for alarms - notifications
+#define SENSOR_SPEED			2 // RPM: Pin used for Speed sensor - via interrupt
+#define SPEAKER				3 // Loudspeaker for alarms - notifications
+#define LED_RPM_SENSOR_ON  6 // LED ON when rpm sensor on (hall sensor)
 
 // Pin configured to use Hardware SPI (mandatory to access the SD card)
 #define SD_CS			  4 // SD Card - Chip Select (Slave Select)
@@ -25,6 +25,7 @@
 
 // Input buttons and Current Sensor
 #define SENSOR_AMP_PIN A0 // Pin connected to the ACS770 output 
+#define LED_ON         A1 // ON-OFF Led- (A1 used as a Digital Input)
 #define SPEED_UP_PIN	  A4 // Speed UP button - (A4 used as a Digital Input)
 #define SPEED_DOWN_PIN A5 // Speed DOWN button - (A5 used as a Digital Input)
 

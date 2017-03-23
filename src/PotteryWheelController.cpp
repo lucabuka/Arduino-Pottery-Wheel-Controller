@@ -57,15 +57,15 @@ Overload protection:
 										//	will be set automatically to 0)
 
 // Current (Ampere)  Sensor
-#define SENSOR_AMP_MAX_VALUE     13.5 // Max AMP before detecting an Overload 
+#define SENSOR_AMP_MAX_VALUE     14.5 // Max AMP before detecting an Overload 
 
-#define SENSOR_AMP_MAX_OLTIME     150 // Max millis() before OVERLOAD produce
+#define SENSOR_AMP_MAX_OLTIME     450 // Max millis() before OVERLOAD produce
 												  // a RESET SPEED
 
-#define SENSOR_AMP_TOTAL_OLTIME  2000 // Max millis() before OVERLOAD produce
+#define SENSOR_AMP_TOTAL_OLTIME  3000 // Max millis() before OVERLOAD produce
 												  // a MOTOR STOP
 
-#define PWM_VAL_AFTER_OVERLOAD    100 // After detecting an overload the PWM 
+#define PWM_VAL_AFTER_OVERLOAD    150 // After detecting an overload the PWM 
 												  // will be automatically reset to this 
 												  // value (ONLY if this value is MINOR
 												  // than the current speed !)
@@ -129,6 +129,7 @@ void setup()
 	pinMode(SPEED_DOWN_PIN, INPUT);
 	
 	pinMode(LED_ON, OUTPUT);
+	pinMode(LED_RPM_SENSOR_ON, OUTPUT);
 	pinMode(DIR_PIN, OUTPUT);
 	pinMode(PWM_PIN, OUTPUT);
 	pinMode(SPEAKER,OUTPUT); 
@@ -152,8 +153,10 @@ void setup()
 		PDEBUG("ERROR ON SET PWM_PIN to frequency:", PWM_FREQUENCY);
 		while (1) {
 		beep(BEEP_Long);
+		digitalWrite(LED_ON, HIGH);
 		delay(250);
 		beep(BEEP_Short);
+		digitalWrite(LED_ON, LOW);
 		delay(250);
 		}
 	}
@@ -236,10 +239,11 @@ void loop()   {
 		logParams = true;  // will write to log file
 	}
 
+	// Turn LED_RPM_SENSOR_ON Led ON when Hall sensor detect the magnet
 	if(currentSpeedSensorState == SENSOR_RPM_ON_STATE){
-		digitalWrite(LED_ON, HIGH);
+		digitalWrite(LED_RPM_SENSOR_ON, HIGH);
 	} else {
-		digitalWrite(LED_ON, LOW);
+		digitalWrite(LED_RPM_SENSOR_ON, LOW);
 	}
 
 	// Read user buttons
